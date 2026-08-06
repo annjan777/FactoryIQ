@@ -50,3 +50,20 @@ class PurchaseOrderLine(Base):
     # Relationships
     purchase_order: Mapped["PurchaseOrder"] = relationship(back_populates="lines")
     component: Mapped["Component"] = relationship()
+
+class SupplierComponent(Base):
+    """Maps which suppliers can provide which components, with cost and lead time."""
+    __tablename__ = "supplier_components"
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False)
+    supplier_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("suppliers.id", ondelete="CASCADE"), nullable=False)
+    component_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("components.id", ondelete="CASCADE"), nullable=False)
+    unit_cost: Mapped[float] = mapped_column(Numeric(14, 2), default=0.00)
+    lead_time_days: Mapped[int] = mapped_column(default=7)
+    is_preferred: Mapped[bool] = mapped_column(default=True)
+
+    # Relationships
+    tenant: Mapped["Tenant"] = relationship()
+    supplier: Mapped["Supplier"] = relationship()
+    component: Mapped["Component"] = relationship()

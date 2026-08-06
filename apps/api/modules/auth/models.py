@@ -13,6 +13,7 @@ class Tenant(Base):
     subdomain: Mapped[str] = mapped_column(String(63), unique=True, nullable=False, index=True)
     plan: Mapped[str] = mapped_column(String(50), default="standard") # standard, enterprise
     isolation_mode: Mapped[str] = mapped_column(String(20), default="rls") # rls, schema, dedicated
+    status: Mapped[str] = mapped_column(String(20), default="active") # active, suspended
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
 
     # Relationships
@@ -42,6 +43,7 @@ class User(Base):
     email: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
     password_hash: Mapped[str] = mapped_column(String(1000), nullable=False)
     status: Mapped[str] = mapped_column(String(20), default="active") # active, suspended
+    is_superuser: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
 
     # Relationships

@@ -8,7 +8,7 @@ from modules.auth.models import Tenant, Organization, User, Role, UserRole
 from modules.bom.models import Warehouse, Product, Component, BOMHeader, BOMLine
 from modules.inventory.models import Inventory, StockMovement, InventoryReservation
 from modules.sales.models import SalesOrder, SalesOrderLine
-from modules.purchasing.models import Supplier, PurchaseOrder, PurchaseOrderLine
+from modules.purchasing.models import Supplier, PurchaseOrder, PurchaseOrderLine, SupplierComponent
 from modules.production.models import ProductionOrder, WorkOrder
 
 def initialize_database():
@@ -97,6 +97,12 @@ def initialize_database():
         "DROP POLICY IF EXISTS tenant_isolation_purchase_order_lines ON purchase_order_lines;",
         "CREATE POLICY tenant_isolation_purchase_order_lines ON purchase_order_lines USING (tenant_id = current_setting('app.current_tenant', true)::uuid);",
         
+        # Supplier Components
+        "ALTER TABLE supplier_components ENABLE ROW LEVEL SECURITY;",
+        "ALTER TABLE supplier_components FORCE ROW LEVEL SECURITY;",
+        "DROP POLICY IF EXISTS tenant_isolation_supplier_components ON supplier_components;",
+        "CREATE POLICY tenant_isolation_supplier_components ON supplier_components USING (tenant_id = current_setting('app.current_tenant', true)::uuid);",
+
         # Production Orders
         "ALTER TABLE production_orders ENABLE ROW LEVEL SECURITY;",
         "ALTER TABLE production_orders FORCE ROW LEVEL SECURITY;",
@@ -109,6 +115,7 @@ def initialize_database():
         "DROP POLICY IF EXISTS tenant_isolation_work_orders ON work_orders;",
         "CREATE POLICY tenant_isolation_work_orders ON work_orders USING (tenant_id = current_setting('app.current_tenant', true)::uuid);"
     ]
+
 
     session = SessionLocal()
     try:
