@@ -29,6 +29,15 @@ export default function Dashboard() {
   const [poActionLoading, setPoActionLoading] = useState<string>("");
   const [prodActionLoading, setProdActionLoading] = useState<string>("");
 
+  // MRP & Gantt & Admin States
+  const [mrpResult, setMrpResult] = useState<any>(null);
+  const [mrpLoading, setMrpLoading] = useState<boolean>(false);
+  const [ganttBars, setGanttBars] = useState<any[]>([]);
+  const [ganttLoading, setGanttLoading] = useState<boolean>(false);
+  const [adminTab, setAdminTab] = useState<boolean>(false);
+  const [adminStats, setAdminStats] = useState<any>(null);
+  const [adminTenants, setAdminTenants] = useState<any[]>([]);
+
   // AI Chat States
   const [chatMessage, setChatMessage] = useState<string>("");
   const [chatHistory, setChatHistory] = useState<any[]>([
@@ -106,6 +115,63 @@ export default function Dashboard() {
       addLog("Sync completed. Loaded inventory, purchase, and production order registries.");
     } catch (err) {
       addLog("Error syncing listings: " + String(err));
+    }
+  };
+
+  // Run MRP Engine
+  const handleRunMRP = async () => {
+    if (!warehouses.length) return;
+    setMrpLoading(true);
+    try {
+      const headers = { Authorization: `Bearer ${token}` };
+      const whId = warehouses[0].id;
+      const res = await fetch(`http://localhost:8000/api/v1/mrp/run?warehouse_id=${whId}`, {
+        method: "POST",
+        headers
+      });
+      if (!res.ok) throw new Error(await res.text());
+      const data = await res.json();
+      setMrpResult(data);
+      addLog(`MRP Engine completed: ${data.total_components_analysed} components evaluated, ${data.shortfall_count} shortfalls, ${data.draft_pos_created.length} draft POs generated.`);
+      await fetchERPData(token);
+    } catch (err: any) {
+      addLog(`MRP calculation error: ${err.message || String(err)}`);
+    } finally {
+      setMrpLoading(false);
+    }
+  };
+
+  // Fetch Gantt Production Schedule
+  const handleFetchGantt = async () => {
+    setGanttLoading(true);
+    try {
+      const headers = { Authorization: `Bearer ${token}` };
+      const res = await fetch("http://localhost:8000/api/v1/production/schedule", { headers });
+      if (!res.ok) throw new Error(await res.text());
+      const data = await res.json();
+      setGanttBars(data);
+      addLog(`Gantt Schedule refreshed: ${data.length} stage bars loaded.`);
+    } catch (err: any) {
+      addLog(`Gantt load error: ${err.message || String(err)}`);
+    } finally {
+      setGanttLoading(false);
+    }
+  };
+
+  // Fetch Admin Stats and Tenants
+  const handleFetchAdminData = async () => {
+    try {
+      const headers = { Authorization: `Bearer ${token}` };
+      const statsRes = await fetch("http://localhost:8000/api/v1/admin/stats", { headers });
+      if (statsRes.ok) {
+        setAdminStats(await statsRes.json());
+      }
+      const tenantsRes = await fetch("http://localhost:8000/api/v1/admin/tenants", { headers });
+      if (tenantsRes.ok) {
+        setAdminTenants(await tenantsRes.json());
+      }
+    } catch (err: any) {
+      addLog(`Admin fetch notice: ${err.message || String(err)}`);
     }
   };
 
@@ -972,8 +1038,168 @@ export default function Dashboard() {
             </div>
           </div>
 
+          {/* MRP Engine Explosion & Sourcing Card */}
+          <div className="bg-[#131B2E] border border-gray-800 rounded-xl p-6 shadow-xl">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
+              <div>
+                <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                  <svg className="w-5 h-5 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                  </svg>
+                  Material Requirements Planning (MRP Engine)
+                </h2>
+                <p className="text-xs text-gray-400 mt-1">Explodes open Sales Order BOMs, calculates net shortfalls & generates draft supplier POs</p>
+              </div>
+
+              <button
+                onClick={handleRunMRP}
+                disabled={mrpLoading || !warehouses.length}
+                className="bg-purple-600 hover:bg-purple-500 text-white font-semibold text-xs py-2 px-5 rounded-lg transition shadow disabled:opacity-40"
+              >
+                {mrpLoading ? "Running Explosion..." : "Run MRP Engine"}
+              </button>
+            </div>
+
+            {mrpResult ? (
+              <div className="flex flex-col gap-4 border-t border-gray-800 pt-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="bg-[#0B0F19] border border-gray-800 p-3 rounded-lg">
+                    <span className="text-[10px] font-mono text-gray-500 uppercase">COMPONENTS ANALYSED</span>
+                    <p className="text-xl font-bold text-white mt-1">{mrpResult.total_components_analysed}</p>
+                  </div>
+                  <div className="bg-[#0B0F19] border border-gray-800 p-3 rounded-lg">
+                    <span className="text-[10px] font-mono text-gray-500 uppercase">NET SHORTFALLS</span>
+                    <p className={`text-xl font-bold mt-1 ${mrpResult.shortfall_count > 0 ? "text-rose-400" : "text-emerald-400"}`}>
+                      {mrpResult.shortfall_count} Items
+                    </p>
+                  </div>
+                  <div className="bg-[#0B0F19] border border-gray-800 p-3 rounded-lg">
+                    <span className="text-[10px] font-mono text-gray-500 uppercase">DRAFT POS CREATED</span>
+                    <p className="text-xl font-bold text-blue-400 mt-1">{mrpResult.draft_pos_created.length} Orders</p>
+                  </div>
+                </div>
+
+                {/* Requirements Explosion Table */}
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr className="border-b border-gray-800 text-gray-400 uppercase font-mono">
+                        <th className="py-2 px-3">Component</th>
+                        <th className="py-2 px-3">Gross Requirement</th>
+                        <th className="py-2 px-3">Available Stock</th>
+                        <th className="py-2 px-3">Net Requirement</th>
+                        <th className="py-2 px-3">Preferred Supplier</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-800/60">
+                      {mrpResult.requirements.map((req: any) => (
+                        <tr key={req.component_id} className="hover:bg-[#0B0F19]/50">
+                          <td className="py-2.5 px-3 font-semibold text-white">
+                            {req.component_name} <span className="text-[10px] text-gray-500 font-mono">({req.component_code})</span>
+                          </td>
+                          <td className="py-2.5 px-3 font-mono">{req.gross_requirement}</td>
+                          <td className="py-2.5 px-3 font-mono text-gray-400">{req.available_qty}</td>
+                          <td className="py-2.5 px-3 font-mono">
+                            {req.net_requirement > 0 ? (
+                              <span className="text-rose-400 font-bold">+{req.net_requirement}</span>
+                            ) : (
+                              <span className="text-emerald-400">0.0 (Sufficient)</span>
+                            )}
+                          </td>
+                          <td className="py-2.5 px-3 text-gray-400">
+                            {req.preferred_supplier_name || "Unassigned"}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Draft POs Summary */}
+                {mrpResult.draft_pos_created.length > 0 && (
+                  <div className="bg-[#0B0F19] border border-gray-800/80 p-3 rounded-lg mt-2">
+                    <span className="text-xs font-mono text-gray-400 uppercase font-bold">Auto-Generated Draft POs:</span>
+                    <div className="flex flex-wrap gap-3 mt-2">
+                      {mrpResult.draft_pos_created.map((po: any) => (
+                        <div key={po.po_id} className="bg-[#131B2E] border border-blue-500/30 p-2.5 rounded-lg text-xs">
+                          <span className="font-bold text-blue-400">{po.po_no}</span>
+                          <span className="text-gray-400 block mt-0.5">{po.supplier_name} ({po.line_count} items)</span>
+                          <span className="text-emerald-400 font-mono font-bold block mt-1">${po.total_cost}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="text-xs text-gray-500 italic py-4 text-center border-t border-gray-800">
+                Click "Run MRP Engine" to compute material explosion across open orders.
+              </div>
+            )}
+          </div>
+
+          {/* Interactive Gantt Timeline Panel */}
+          <div className="bg-[#131B2E] border border-gray-800 rounded-xl p-6 shadow-xl">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                <svg className="w-5 h-5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                Production Gantt Timeline Schedule
+              </h2>
+
+              <button
+                onClick={handleFetchGantt}
+                disabled={ganttLoading}
+                className="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs py-1.5 px-4 rounded-lg transition shadow disabled:opacity-40"
+              >
+                {ganttLoading ? "Loading..." : "Refresh Timeline"}
+              </button>
+            </div>
+
+            {ganttBars.length > 0 ? (
+              <div className="flex flex-col gap-3 border-t border-gray-800 pt-4">
+                {ganttBars.map((bar: any) => (
+                  <div key={bar.work_order_id} className="bg-[#0B0F19] border border-gray-800 p-3 rounded-lg">
+                    <div className="flex justify-between items-center text-xs mb-1.5">
+                      <span className="font-bold text-white uppercase tracking-wide">
+                        Seq {bar.sequence_no}: <span className="text-indigo-400 capitalize">{bar.stage}</span> ({bar.lead_time_hours}h lead)
+                      </span>
+                      <span className={`px-2 py-0.5 rounded font-mono text-[9px] uppercase ${
+                        bar.status === "completed" ? "bg-emerald-500/10 text-emerald-400" :
+                        bar.status === "active" ? "bg-yellow-500/10 text-yellow-400" : "bg-gray-500/10 text-gray-400"
+                      }`}>
+                        {bar.status}
+                      </span>
+                    </div>
+
+                    <div className="w-full bg-gray-800 rounded-full h-3 overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all ${
+                          bar.status === "completed" ? "bg-emerald-500" :
+                          bar.status === "active" ? "bg-yellow-400 animate-pulse" : "bg-indigo-500"
+                        }`}
+                        style={{ width: bar.status === "completed" ? "100%" : bar.status === "active" ? "50%" : "20%" }}
+                      ></div>
+                    </div>
+
+                    <div className="flex justify-between text-[10px] font-mono text-gray-500 mt-1">
+                      <span>Start: {new Date(bar.scheduled_start).toLocaleString()}</span>
+                      <span>End: {new Date(bar.scheduled_end).toLocaleString()}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-xs text-gray-500 italic py-4 text-center border-t border-gray-800">
+                Click "Refresh Timeline" to view Gantt schedule lead-time bars.
+              </div>
+            )}
+          </div>
+
           {/* Inventory balances table */}
           <div className="bg-[#131B2E] border border-gray-800 rounded-xl p-6 shadow-xl">
+
             <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
               <svg className="w-5 h-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
