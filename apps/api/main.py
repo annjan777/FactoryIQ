@@ -15,6 +15,7 @@ from modules.purchasing.router import router as purchasing_router
 from modules.production.router import router as production_router
 from modules.mrp.router import router as mrp_router
 from modules.admin.router import router as admin_router
+from modules.quality.router import router as quality_router
 
 # Configure Structured Logging
 logger.remove()
@@ -72,6 +73,7 @@ app.include_router(purchasing_router, prefix=settings.API_V1_STR)
 app.include_router(production_router, prefix=settings.API_V1_STR)
 app.include_router(mrp_router, prefix=settings.API_V1_STR)
 app.include_router(admin_router, prefix=settings.API_V1_STR)
+app.include_router(quality_router, prefix=settings.API_V1_STR)
 
 @app.get("/health", tags=["System Health"])
 async def health_check():

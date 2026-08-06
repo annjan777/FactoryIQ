@@ -10,6 +10,7 @@ from modules.inventory.models import Inventory, StockMovement, InventoryReservat
 from modules.sales.models import SalesOrder, SalesOrderLine
 from modules.purchasing.models import Supplier, PurchaseOrder, PurchaseOrderLine, SupplierComponent
 from modules.production.models import ProductionOrder, WorkOrder
+from modules.quality.models import InspectionGate, QualityInspection, ScrapLog
 
 def initialize_database():
     print("Starting database schema creation...")
@@ -113,7 +114,25 @@ def initialize_database():
         "ALTER TABLE work_orders ENABLE ROW LEVEL SECURITY;",
         "ALTER TABLE work_orders FORCE ROW LEVEL SECURITY;",
         "DROP POLICY IF EXISTS tenant_isolation_work_orders ON work_orders;",
-        "CREATE POLICY tenant_isolation_work_orders ON work_orders USING (tenant_id = current_setting('app.current_tenant', true)::uuid);"
+        "CREATE POLICY tenant_isolation_work_orders ON work_orders USING (tenant_id = current_setting('app.current_tenant', true)::uuid);",
+
+        # Inspection Gates
+        "ALTER TABLE inspection_gates ENABLE ROW LEVEL SECURITY;",
+        "ALTER TABLE inspection_gates FORCE ROW LEVEL SECURITY;",
+        "DROP POLICY IF EXISTS tenant_isolation_inspection_gates ON inspection_gates;",
+        "CREATE POLICY tenant_isolation_inspection_gates ON inspection_gates USING (tenant_id = current_setting('app.current_tenant', true)::uuid);",
+
+        # Quality Inspections
+        "ALTER TABLE quality_inspections ENABLE ROW LEVEL SECURITY;",
+        "ALTER TABLE quality_inspections FORCE ROW LEVEL SECURITY;",
+        "DROP POLICY IF EXISTS tenant_isolation_quality_inspections ON quality_inspections;",
+        "CREATE POLICY tenant_isolation_quality_inspections ON quality_inspections USING (tenant_id = current_setting('app.current_tenant', true)::uuid);",
+
+        # Scrap Logs
+        "ALTER TABLE scrap_logs ENABLE ROW LEVEL SECURITY;",
+        "ALTER TABLE scrap_logs FORCE ROW LEVEL SECURITY;",
+        "DROP POLICY IF EXISTS tenant_isolation_scrap_logs ON scrap_logs;",
+        "CREATE POLICY tenant_isolation_scrap_logs ON scrap_logs USING (tenant_id = current_setting('app.current_tenant', true)::uuid);"
     ]
 
 
