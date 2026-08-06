@@ -33,7 +33,14 @@ async def get_current_user(
     tenant_id: str = payload.get("tenant_id")
     if user_id is None or tenant_id is None:
         raise credentials_exception
-        
+
+    # Set session RLS variable so Postgres allows reading the user under active RLS policy
+    from sqlalchemy import text
+    await db.execute(
+        text("SELECT set_config('app.current_tenant', :tenant_id, false)"),
+        {"tenant_id": str(tenant_id)}
+    )
+
     # Query user and eager load roles and tenant
     result = await db.execute(
         select(User)
@@ -41,6 +48,7 @@ async def get_current_user(
         .where(User.id == uuid.UUID(user_id), User.tenant_id == uuid.UUID(tenant_id))
     )
     user = result.scalar_one_or_none()
+
     
     if user is None:
         raise credentials_exception

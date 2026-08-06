@@ -12,43 +12,6 @@ from modules.admin.schemas import (
     TenantSubscriptionUpdate,
     SystemStatsResponse,
 )
-
-@router.post("/tenants/{tenant_id}/subscription", response_model=TenantAdminResponse)
-async def update_tenant_subscription(
-    tenant_id: uuid.UUID,
-    payload: TenantSubscriptionUpdate,
-    _: User = Depends(require_superuser),
-    db: AsyncSession = Depends(get_db),
-):
-    """Update tenant subscription status, expiration date, industry, or product limit."""
-    try:
-        updated = await AdminService.update_subscription(db, tenant_id, payload)
-        tenants = await AdminService.list_tenants(db)
-        return next(t for t in tenants if t.id == updated.id)
-    except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
-
-
-@router.post("/tenants/{tenant_id}/kill-switch", response_model=TenantAdminResponse)
-async def toggle_kill_switch(
-    tenant_id: uuid.UUID,
-    _: User = Depends(require_superuser),
-    db: AsyncSession = Depends(get_db),
-):
-    """Toggle tenant kill-switch: immediately suspend active tenant or reactivate suspended tenant."""
-    try:
-        tenants = await AdminService.list_tenants(db)
-        tenant_record = next((t for t in tenants if t.id == tenant_id), None)
-        if not tenant_record:
-            raise HTTPException(status_code=404, detail="Tenant not found.")
-
-        target_status = "suspended" if tenant_record.status == "active" else "active"
-        updated = await AdminService.update_tenant_status(db, tenant_id, target_status)
-        tenants_refreshed = await AdminService.list_tenants(db)
-        return next(t for t in tenants_refreshed if t.id == updated.id)
-    except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
-
 from modules.admin.service import AdminService
 
 router = APIRouter(prefix="/admin", tags=["Superadmin Portal"])
@@ -87,6 +50,43 @@ async def update_tenant_status(
         )
         tenants = await AdminService.list_tenants(db)
         return next(t for t in tenants if t.id == updated.id)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@router.post("/tenants/{tenant_id}/subscription", response_model=TenantAdminResponse)
+async def update_tenant_subscription(
+    tenant_id: uuid.UUID,
+    payload: TenantSubscriptionUpdate,
+    _: User = Depends(require_superuser),
+    db: AsyncSession = Depends(get_db),
+):
+    """Update tenant subscription status, expiration date, industry, or product limit."""
+    try:
+        updated = await AdminService.update_subscription(db, tenant_id, payload)
+        tenants = await AdminService.list_tenants(db)
+        return next(t for t in tenants if t.id == updated.id)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@router.post("/tenants/{tenant_id}/kill-switch", response_model=TenantAdminResponse)
+async def toggle_kill_switch(
+    tenant_id: uuid.UUID,
+    _: User = Depends(require_superuser),
+    db: AsyncSession = Depends(get_db),
+):
+    """Toggle tenant kill-switch: immediately suspend active tenant or reactivate suspended tenant."""
+    try:
+        tenants = await AdminService.list_tenants(db)
+        tenant_record = next((t for t in tenants if t.id == tenant_id), None)
+        if not tenant_record:
+            raise HTTPException(status_code=404, detail="Tenant not found.")
+
+        target_status = "suspended" if tenant_record.status == "active" else "active"
+        updated = await AdminService.update_tenant_status(db, tenant_id, target_status)
+        tenants_refreshed = await AdminService.list_tenants(db)
+        return next(t for t in tenants_refreshed if t.id == updated.id)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
 
