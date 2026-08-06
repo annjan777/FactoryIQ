@@ -11,6 +11,7 @@ from modules.sales.models import SalesOrder, SalesOrderLine
 from modules.purchasing.models import Supplier, PurchaseOrder, PurchaseOrderLine, SupplierComponent
 from modules.production.models import ProductionOrder, WorkOrder
 from modules.quality.models import InspectionGate, QualityInspection, ScrapLog
+from modules.costing.models import StandardCost, JobCostLedger
 
 def initialize_database():
     print("Starting database schema creation...")
@@ -132,7 +133,19 @@ def initialize_database():
         "ALTER TABLE scrap_logs ENABLE ROW LEVEL SECURITY;",
         "ALTER TABLE scrap_logs FORCE ROW LEVEL SECURITY;",
         "DROP POLICY IF EXISTS tenant_isolation_scrap_logs ON scrap_logs;",
-        "CREATE POLICY tenant_isolation_scrap_logs ON scrap_logs USING (tenant_id = current_setting('app.current_tenant', true)::uuid);"
+        "CREATE POLICY tenant_isolation_scrap_logs ON scrap_logs USING (tenant_id = current_setting('app.current_tenant', true)::uuid);",
+
+        # Standard Costs
+        "ALTER TABLE standard_costs ENABLE ROW LEVEL SECURITY;",
+        "ALTER TABLE standard_costs FORCE ROW LEVEL SECURITY;",
+        "DROP POLICY IF EXISTS tenant_isolation_standard_costs ON standard_costs;",
+        "CREATE POLICY tenant_isolation_standard_costs ON standard_costs USING (tenant_id = current_setting('app.current_tenant', true)::uuid);",
+
+        # Job Cost Ledger
+        "ALTER TABLE job_cost_ledger ENABLE ROW LEVEL SECURITY;",
+        "ALTER TABLE job_cost_ledger FORCE ROW LEVEL SECURITY;",
+        "DROP POLICY IF EXISTS tenant_isolation_job_cost_ledger ON job_cost_ledger;",
+        "CREATE POLICY tenant_isolation_job_cost_ledger ON job_cost_ledger USING (tenant_id = current_setting('app.current_tenant', true)::uuid);"
     ]
 
 
