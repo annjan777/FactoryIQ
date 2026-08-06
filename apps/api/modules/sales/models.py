@@ -23,10 +23,13 @@ class SalesOrderLine(Base):
     __tablename__ = "sales_order_lines"
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    tenant_id: Mapped[Optional[uuid.UUID]] = mapped_column(ForeignKey("tenants.id", ondelete="CASCADE"), nullable=True)
+
     sales_order_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("sales_orders.id", ondelete="CASCADE"), nullable=False)
     product_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("products.id", ondelete="CASCADE"), nullable=False)
     qty_ordered: Mapped[float] = mapped_column(Numeric(14, 2), nullable=False)
     qty_produced: Mapped[float] = mapped_column(Numeric(14, 2), default=0.00)
+
 
     # Relationships
     sales_order: Mapped["SalesOrder"] = relationship(back_populates="lines")

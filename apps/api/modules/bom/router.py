@@ -154,12 +154,14 @@ async def create_bom(
     # Create BOM Lines
     for line in bom_in.lines:
         bom_line = BOMLine(
+            tenant_id=current_user.tenant_id,
             bom_header_id=bom_header.id,
             component_id=line.component_id,
             qty_per_unit=line.qty_per_unit,
             scrap_pct=line.scrap_pct
         )
         db.add(bom_line)
+
         
     await db.commit()
     

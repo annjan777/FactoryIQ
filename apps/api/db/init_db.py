@@ -145,8 +145,21 @@ def initialize_database():
         "ALTER TABLE job_cost_ledger ENABLE ROW LEVEL SECURITY;",
         "ALTER TABLE job_cost_ledger FORCE ROW LEVEL SECURITY;",
         "DROP POLICY IF EXISTS tenant_isolation_job_cost_ledger ON job_cost_ledger;",
-        "CREATE POLICY tenant_isolation_job_cost_ledger ON job_cost_ledger USING (tenant_id = current_setting('app.current_tenant', true)::uuid);"
+        "CREATE POLICY tenant_isolation_job_cost_ledger ON job_cost_ledger USING (tenant_id = current_setting('app.current_tenant', true)::uuid);",
+
+        # BOM Lines
+        "ALTER TABLE bom_lines ENABLE ROW LEVEL SECURITY;",
+        "ALTER TABLE bom_lines FORCE ROW LEVEL SECURITY;",
+        "DROP POLICY IF EXISTS tenant_isolation_bom_lines ON bom_lines;",
+        "CREATE POLICY tenant_isolation_bom_lines ON bom_lines USING (tenant_id = current_setting('app.current_tenant', true)::uuid);",
+
+        # Sales Order Lines
+        "ALTER TABLE sales_order_lines ENABLE ROW LEVEL SECURITY;",
+        "ALTER TABLE sales_order_lines FORCE ROW LEVEL SECURITY;",
+        "DROP POLICY IF EXISTS tenant_isolation_sales_order_lines ON sales_order_lines;",
+        "CREATE POLICY tenant_isolation_sales_order_lines ON sales_order_lines USING (tenant_id = current_setting('app.current_tenant', true)::uuid);"
     ]
+
 
 
     session = SessionLocal()

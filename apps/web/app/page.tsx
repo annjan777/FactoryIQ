@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
+
+
 
 export default function Dashboard() {
   // System context states
@@ -30,14 +31,12 @@ export default function Dashboard() {
   const [poActionLoading, setPoActionLoading] = useState<string>("");
   const [prodActionLoading, setProdActionLoading] = useState<string>("");
 
-  // MRP & Gantt & Admin States
+  // MRP & Gantt States
   const [mrpResult, setMrpResult] = useState<any>(null);
   const [mrpLoading, setMrpLoading] = useState<boolean>(false);
   const [ganttBars, setGanttBars] = useState<any[]>([]);
   const [ganttLoading, setGanttLoading] = useState<boolean>(false);
-  const [adminTab, setAdminTab] = useState<boolean>(false);
-  const [adminStats, setAdminStats] = useState<any>(null);
-  const [adminTenants, setAdminTenants] = useState<any[]>([]);
+
 
   // AI Chat States
   const [chatMessage, setChatMessage] = useState<string>("");
@@ -159,22 +158,6 @@ export default function Dashboard() {
     }
   };
 
-  // Fetch Admin Stats and Tenants
-  const handleFetchAdminData = async () => {
-    try {
-      const headers = { Authorization: `Bearer ${token}` };
-      const statsRes = await fetch("http://localhost:8000/api/v1/admin/stats", { headers });
-      if (statsRes.ok) {
-        setAdminStats(await statsRes.json());
-      }
-      const tenantsRes = await fetch("http://localhost:8000/api/v1/admin/tenants", { headers });
-      if (tenantsRes.ok) {
-        setAdminTenants(await tenantsRes.json());
-      }
-    } catch (err: any) {
-      addLog(`Admin fetch notice: ${err.message || String(err)}`);
-    }
-  };
 
   // Onboard / Seed worked T-Shirt Scenario
   const handleSeedScenario = async () => {
@@ -621,18 +604,9 @@ export default function Dashboard() {
               {isSeeding ? "Seeding Database..." : "Seed Worked T-Shirt Scenario"}
             </button>
           )}
-
-          <Link
-            href="/admin/platform"
-            className="py-1.5 px-3 rounded-lg text-xs font-semibold border transition flex items-center gap-1.5 bg-purple-600/20 hover:bg-purple-600/40 text-purple-300 border-purple-500/30"
-          >
-            <svg className="w-4 h-4 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-            </svg>
-            Superadmin Operations Portal →
-          </Link>
         </div>
       </header>
+
 
 
 

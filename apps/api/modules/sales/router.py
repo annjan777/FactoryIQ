@@ -46,11 +46,13 @@ async def create_sales_order(
     # 2. Create Sales Order Lines
     for line in so_in.lines:
         so_line = SalesOrderLine(
+            tenant_id=current_user.tenant_id,
             sales_order_id=so.id,
             product_id=line.product_id,
             qty_ordered=line.qty_ordered
         )
         db.add(so_line)
+
         
     await db.commit()
     

@@ -65,10 +65,13 @@ class BOMLine(Base):
     __tablename__ = "bom_lines"
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    tenant_id: Mapped[Optional[uuid.UUID]] = mapped_column(ForeignKey("tenants.id", ondelete="CASCADE"), nullable=True)
+
     bom_header_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("bom_headers.id", ondelete="CASCADE"), nullable=False)
     component_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("components.id", ondelete="CASCADE"), nullable=False)
     qty_per_unit: Mapped[float] = mapped_column(Numeric(14, 4), nullable=False)
     scrap_pct: Mapped[float] = mapped_column(Numeric(5, 2), default=0.00)
+
 
     # Relationships
     bom_header: Mapped["BOMHeader"] = relationship(back_populates="lines")
