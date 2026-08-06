@@ -10,6 +10,10 @@ class TenantAdminResponse(BaseModel):
     plan: str
     isolation_mode: str
     status: str
+    subscription_status: str
+    subscription_expires_at: Optional[datetime] = None
+    industry_type: str
+    max_products_limit: int
     created_at: datetime
     user_count: int
 
@@ -17,6 +21,13 @@ class TenantAdminResponse(BaseModel):
 
 class TenantStatusUpdate(BaseModel):
     status: str # active, suspended
+
+class TenantSubscriptionUpdate(BaseModel):
+    subscription_status: Optional[str] = None # active, trial, grace_period, expired, suspended
+    subscription_expires_at: Optional[datetime] = None
+    industry_type: Optional[str] = None # garment, furniture, electronics, custom
+    max_products_limit: Optional[int] = None
+
 
 class SystemStatsResponse(BaseModel):
     total_tenants: int

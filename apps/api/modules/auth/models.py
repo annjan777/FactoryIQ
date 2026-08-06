@@ -14,6 +14,10 @@ class Tenant(Base):
     plan: Mapped[str] = mapped_column(String(50), default="standard") # standard, enterprise
     isolation_mode: Mapped[str] = mapped_column(String(20), default="rls") # rls, schema, dedicated
     status: Mapped[str] = mapped_column(String(20), default="active") # active, suspended
+    subscription_status: Mapped[str] = mapped_column(String(20), default="active") # active, trial, grace_period, expired, suspended
+    subscription_expires_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    industry_type: Mapped[str] = mapped_column(String(50), default="garment") # garment, furniture, electronics, custom
+    max_products_limit: Mapped[int] = mapped_column(default=100)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
 
     # Relationships

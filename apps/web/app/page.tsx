@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 
 export default function Dashboard() {
   // System context states
@@ -621,139 +622,18 @@ export default function Dashboard() {
             </button>
           )}
 
-          <button
-            onClick={() => {
-              setAdminTab(!adminTab);
-              if (!adminTab) handleFetchAdminData();
-            }}
-            className={`py-1.5 px-3 rounded-lg text-xs font-semibold border transition flex items-center gap-1.5 ${
-              adminTab
-                ? "bg-purple-600 text-white border-purple-500"
-                : "bg-gray-800/80 hover:bg-gray-700 text-gray-300 border-gray-700"
-            }`}
+          <Link
+            href="/admin/platform"
+            className="py-1.5 px-3 rounded-lg text-xs font-semibold border transition flex items-center gap-1.5 bg-purple-600/20 hover:bg-purple-600/40 text-purple-300 border-purple-500/30"
           >
             <svg className="w-4 h-4 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
             </svg>
-            {adminTab ? "Close Superadmin View" : "Superadmin Oversight"}
-          </button>
+            Superadmin Operations Portal →
+          </Link>
         </div>
       </header>
 
-      {/* Superadmin Oversight Panel */}
-      {adminTab && (
-        <div className="bg-[#131B2E] border border-purple-500/30 rounded-xl p-6 mb-6 shadow-2xl animate-fade-in">
-          <div className="flex justify-between items-center pb-4 mb-4 border-b border-gray-800">
-            <div>
-              <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                <span className="bg-purple-500/20 text-purple-400 p-1.5 rounded-lg border border-purple-500/30">🛡️</span>
-                Superadmin Platform Oversight Console
-              </h2>
-              <p className="text-xs text-gray-400 mt-1">Cross-tenant isolation monitoring, account status toggles & system-wide metrics</p>
-            </div>
-            <button
-              onClick={handleFetchAdminData}
-              className="bg-purple-600 hover:bg-purple-500 text-white font-semibold text-xs py-1.5 px-4 rounded-lg transition shadow"
-            >
-              Refresh Platform Metrics
-            </button>
-          </div>
-
-          {/* System Metrics Cards */}
-          {adminStats && (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-              <div className="bg-[#0B0F19] border border-gray-800 p-3.5 rounded-xl">
-                <span className="text-[10px] font-mono text-gray-500 uppercase block">Registered Tenants</span>
-                <span className="text-2xl font-extrabold text-white mt-1 block">{adminStats.total_tenants}</span>
-                <span className="text-[10px] text-emerald-400 mt-0.5 block">{adminStats.active_tenants} Active / {adminStats.suspended_tenants} Suspended</span>
-              </div>
-              <div className="bg-[#0B0F19] border border-gray-800 p-3.5 rounded-xl">
-                <span className="text-[10px] font-mono text-gray-500 uppercase block">Total System Users</span>
-                <span className="text-2xl font-extrabold text-blue-400 mt-1 block">{adminStats.total_users}</span>
-                <span className="text-[10px] text-gray-500 mt-0.5 block">Across all tenants</span>
-              </div>
-              <div className="bg-[#0B0F19] border border-gray-800 p-3.5 rounded-xl">
-                <span className="text-[10px] font-mono text-gray-500 uppercase block">Active Production Runs</span>
-                <span className="text-2xl font-extrabold text-emerald-400 mt-1 block">{adminStats.total_production_orders}</span>
-                <span className="text-[10px] text-gray-500 mt-0.5 block">Work orders in pipeline</span>
-              </div>
-              <div className="bg-[#0B0F19] border border-gray-800 p-3.5 rounded-xl">
-                <span className="text-[10px] font-mono text-gray-500 uppercase block">System Purchase Orders</span>
-                <span className="text-2xl font-extrabold text-amber-400 mt-1 block">{adminStats.total_purchase_orders}</span>
-                <span className="text-[10px] text-gray-500 mt-0.5 block">Material supply orders</span>
-              </div>
-            </div>
-          )}
-
-          {/* Tenants Registry Table */}
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr className="border-b border-gray-800 text-gray-400 font-mono uppercase">
-                  <th className="py-2.5 px-3">Tenant Name</th>
-                  <th className="py-2.5 px-3">Subdomain</th>
-                  <th className="py-2.5 px-3">Plan</th>
-                  <th className="py-2.5 px-3">Isolation Mode</th>
-                  <th className="py-2.5 px-3">Users</th>
-                  <th className="py-2.5 px-3">Status</th>
-                  <th className="py-2.5 px-3 text-right">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-800/60">
-                {adminTenants.length > 0 ? (
-                  adminTenants.map((t) => (
-                    <tr key={t.id} className="hover:bg-[#0B0F19]/60">
-                      <td className="py-3 px-3 font-semibold text-white">{t.name}</td>
-                      <td className="py-3 px-3 font-mono text-blue-400">{t.subdomain}</td>
-                      <td className="py-3 px-3 capitalize">{t.plan}</td>
-                      <td className="py-3 px-3">
-                        <span className={`px-2 py-0.5 rounded font-mono text-[9px] uppercase ${
-                          t.isolation_mode === "schema" ? "bg-purple-500/10 text-purple-400 border border-purple-500/20" : "bg-blue-500/10 text-blue-400 border border-blue-500/20"
-                        }`}>
-                          {t.isolation_mode}
-                        </span>
-                      </td>
-                      <td className="py-3 px-3 font-bold">{t.user_count}</td>
-                      <td className="py-3 px-3">
-                        <span className={`px-2 py-0.5 rounded font-mono text-[9px] uppercase ${
-                          t.status === "active" ? "bg-emerald-500/10 text-emerald-400" : "bg-rose-500/10 text-rose-400"
-                        }`}>
-                          {t.status}
-                        </span>
-                      </td>
-                      <td className="py-3 px-3 text-right">
-                        <button
-                          onClick={async () => {
-                            const newStatus = t.status === "active" ? "suspended" : "active";
-                            const headers = { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
-                            await fetch(`http://localhost:8000/api/v1/admin/tenants/${t.id}/status`, {
-                              method: "PATCH",
-                              headers,
-                              body: JSON.stringify({ status: newStatus })
-                            });
-                            handleFetchAdminData();
-                          }}
-                          className={`py-1 px-3 rounded text-[10px] font-bold uppercase transition ${
-                            t.status === "active" ? "bg-rose-600/20 hover:bg-rose-600 text-rose-300" : "bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300"
-                          }`}
-                        >
-                          {t.status === "active" ? "Suspend" : "Activate"}
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={7} className="py-4 text-center text-gray-500 italic">
-                      No tenants registered in platform database.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
 
 
       {/* Main Grid */}

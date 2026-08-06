@@ -20,14 +20,27 @@ from modules.production.schemas import ProductionOrderCreate, ProductionOrderRes
 
 router = APIRouter(prefix="/production", tags=["Production Execution"])
 
-# Stages in sequential order with their default lead times (hours)
-STAGES = ["cutting", "stitching", "finishing", "packing"]
-STAGE_LEAD_TIMES = {
-    "cutting":   8,
-    "stitching": 16,
-    "finishing":  8,
-    "packing":    4,
+# Industry-specific production stage templates & lead times (hours)
+INDUSTRY_STAGES = {
+    "garment": ["cutting", "stitching", "finishing", "packing"],
+    "furniture": ["wood_cutting", "sanding", "assembly", "polishing", "packing"],
+    "electronics": ["smt_assembly", "soldering", "testing", "casing", "packaging"],
+    "custom": ["design", "fabrication", "assembly", "qa", "dispatch"],
 }
+
+INDUSTRY_LEAD_TIMES = {
+    "garment": {"cutting": 8, "stitching": 16, "finishing": 8, "packing": 4},
+    "furniture": {"wood_cutting": 12, "sanding": 8, "assembly": 16, "polishing": 12, "packing": 6},
+    "electronics": {"smt_assembly": 10, "soldering": 8, "testing": 12, "casing": 6, "packaging": 4},
+    "custom": {"design": 16, "fabrication": 24, "assembly": 16, "qa": 8, "dispatch": 4},
+}
+
+def resolve_stages_for_tenant(tenant):
+    ind = tenant.industry_type.lower() if tenant and tenant.industry_type else "garment"
+    stages = INDUSTRY_STAGES.get(ind, INDUSTRY_STAGES["garment"])
+    lead_times = INDUSTRY_LEAD_TIMES.get(ind, INDUSTRY_LEAD_TIMES["garment"])
+    return stages, lead_times
+
 
 @router.post("/runs", response_model=ProductionOrderResponse, status_code=status.HTTP_201_CREATED)
 async def schedule_production_run(
@@ -86,8 +99,10 @@ async def schedule_production_run(
     stage_cursor = run_in.scheduled_start or datetime.now(timezone.utc)
     po.scheduled_start = stage_cursor
 
-    for idx, stage in enumerate(STAGES):
-        lead_h = STAGE_LEAD_TIMES[stage]
+    stages, lead_times_map = resolve_stages_for_tenant(current_user.tenant)
+
+    for idx, stage in enumerate(stages):
+        lead_h = lead_times_map.get(stage, 8)
         wo_start = stage_cursor
         wo_end = stage_cursor + timedelta(hours=lead_h)
         wo = WorkOrder(
@@ -102,6 +117,7 @@ async def schedule_production_run(
         )
         db.add(wo)
         stage_cursor = wo_end
+
 
     po.scheduled_end = stage_cursor  # end of the last stage
 
